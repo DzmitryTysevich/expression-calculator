@@ -190,5 +190,4 @@ public class CalcServletTest {
             this.val = val;
         }
     }
-
 }
