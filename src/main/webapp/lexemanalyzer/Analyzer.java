@@ -4,6 +4,15 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * _______________________________________________
+ * PARSER RULES
+ * _______________________________________________
+ * expr : plusminus* EOF ;
+ * plusminus: multdiv ( ( '+' | '-' ) multdiv )* ;
+ * multdiv : factor ( ( '*' | '/' ) factor )* ;
+ * factor : NUMBER | '(' expr ')'
+ */
 public class Analyzer {
     public int getExpressionResult(String expression, HttpServletRequest req) {
         List<Lexeme> lexemes = lexemeAnalyze(expression, req);
@@ -16,31 +25,31 @@ public class Analyzer {
         while (position < expression.length()) {
             char character = expression.charAt(position);
             switch (character) {
-                case '(':
+                case '(' -> {
                     lexemes.add(new Lexeme(LexemeType.LEFT_BRACKET, character));
                     position++;
-                    continue;
-                case ')':
+                }
+                case ')' -> {
                     lexemes.add(new Lexeme(LexemeType.RIGHT_BRACKET, character));
                     position++;
-                    continue;
-                case '+':
+                }
+                case '+' -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_PLUS, character));
                     position++;
-                    continue;
-                case '-':
+                }
+                case '-' -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_MINUS, character));
                     position++;
-                    continue;
-                case '*':
+                }
+                case '*' -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_MUL, character));
                     position++;
-                    continue;
-                case '/':
+                }
+                case '/' -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_DIV, character));
                     position++;
-                    continue;
-                default:
+                }
+                default -> {
                     if (character <= '9' && character >= '0') {
                         StringBuilder sb = new StringBuilder();
                         do {
@@ -69,15 +78,12 @@ public class Analyzer {
                         }
                         position++;
                     }
+                }
             }
         }
         lexemes.add(new Lexeme(LexemeType.EOF, ""));
         return lexemes;
     }
-//    expr : plusminus* EOF ;
-//    plusminus: multdiv ( ( '+' | '-' ) multdiv )* ;
-//    multdiv : factor ( ( '*' | '/' ) factor )* ;
-//    factor : NUMBER | '(' expr ')' ;
 
     private int expr(LexemeBuffer lexemes) {
         Lexeme lexeme = lexemes.next();
@@ -94,19 +100,14 @@ public class Analyzer {
         while (true) {
             Lexeme lexeme = lexemes.next();
             switch (lexeme.type) {
-                case OPERATOR_PLUS:
-                    value += multdiv(lexemes);
-                    break;
-                case OPERATOR_MINUS:
-                    value -= multdiv(lexemes);
-                    break;
-                case EOF:
-                case RIGHT_BRACKET:
+                case OPERATOR_PLUS -> value += multdiv(lexemes);
+                case OPERATOR_MINUS -> value -= multdiv(lexemes);
+                case EOF, RIGHT_BRACKET -> {
                     lexemes.back();
                     return value;
-                default:
-                    throw new RuntimeException("Unexpected token: " + lexeme.value
-                            + " at position: " + lexemes.getPos());
+                }
+                default -> throw new RuntimeException("Unexpected token: " + lexeme.value
+                        + " at position: " + lexemes.getPos());
             }
         }
     }
@@ -116,21 +117,14 @@ public class Analyzer {
         while (true) {
             Lexeme lexeme = lexemes.next();
             switch (lexeme.type) {
-                case OPERATOR_MUL:
-                    value *= factor(lexemes);
-                    break;
-                case OPERATOR_DIV:
-                    value /= factor(lexemes);
-                    break;
-                case EOF:
-                case RIGHT_BRACKET:
-                case OPERATOR_PLUS:
-                case OPERATOR_MINUS:
+                case OPERATOR_MUL -> value *= factor(lexemes);
+                case OPERATOR_DIV -> value /= factor(lexemes);
+                case EOF, RIGHT_BRACKET, OPERATOR_PLUS, OPERATOR_MINUS -> {
                     lexemes.back();
                     return value;
-                default:
-                    throw new RuntimeException("Unexpected token: " + lexeme.value
-                            + " at position: " + lexemes.getPos());
+                }
+                default -> throw new RuntimeException("Unexpected token: " + lexeme.value
+                        + " at position: " + lexemes.getPos());
             }
         }
     }
@@ -138,9 +132,10 @@ public class Analyzer {
     private int factor(LexemeBuffer lexemes) {
         Lexeme lexeme = lexemes.next();
         switch (lexeme.type) {
-            case NUMBER:
+            case NUMBER -> {
                 return Integer.parseInt(lexeme.value);
-            case LEFT_BRACKET:
+            }
+            case LEFT_BRACKET -> {
                 int value = plusminus(lexemes);
                 lexeme = lexemes.next();
                 if (lexeme.type != LexemeType.RIGHT_BRACKET) {
@@ -148,9 +143,9 @@ public class Analyzer {
                             + " at position: " + lexemes.getPos());
                 }
                 return value;
-            default:
-                throw new RuntimeException("Unexpected token: " + lexeme.value
-                        + " at position: " + lexemes.getPos());
+            }
+            default -> throw new RuntimeException("Unexpected token: " + lexeme.value
+                    + " at position: " + lexemes.getPos());
         }
     }
 }
