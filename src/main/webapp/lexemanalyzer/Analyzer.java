@@ -60,7 +60,7 @@ public class Analyzer {
                     position++;
                 }
                 default -> {
-                    if (isCertainCharacters(character, '9', '0')) { //number parse
+                    if (isCertainCharacters(character, '0', '9')) { //number parse
                         StringBuilder sb = new StringBuilder();
                         do {
                             sb.append(character);
@@ -69,7 +69,7 @@ public class Analyzer {
                                 break;
                             }
                             character = expression.charAt(position);
-                        } while (isCertainCharacters(character, '9', '0'));
+                        } while (isCertainCharacters(character, '0', '9'));
                         lexemes.add(new Lexeme(LexemeType.NUMBER, sb.toString()));
                     } else if (isCertainCharacters(character, 'a', 'z')) { //letter parse
                         StringBuilder sb = new StringBuilder();
