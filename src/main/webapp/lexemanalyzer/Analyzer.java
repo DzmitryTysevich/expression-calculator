@@ -4,6 +4,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static lexemanalyzer.ExpressionChars.*;
+
 /**
  * <h3>Parser rules for analyzer:</h3>
  * <p>expression: <b>plusMinus*</b> and <b>endOfField</b>;</p>
@@ -12,6 +14,9 @@ import java.util.List;
  * <p>factor: <b>NUMBER</b> or <b>'('expression')'</b>.</p>
  */
 public class Analyzer {
+    private final String UNEXPECTED_TOKEN = "Unexpected token: ";
+    private final String AT_POSITION = " at position: ";
+    private static final String UNEXPECTED_CHARACTER = "Unexpected character: ";
 
     /**
      * This is the method that will collect the analyzer.
@@ -35,32 +40,32 @@ public class Analyzer {
         while (position < expression.length()) {
             char character = expression.charAt(position);
             switch (character) {
-                case '(' -> {
+                case LEFT_BRACKET_CHAR -> {
                     lexemes.add(new Lexeme(LexemeType.LEFT_BRACKET, character));
                     position++;
                 }
-                case ')' -> {
+                case RIGHT_BRACKET_CHAR -> {
                     lexemes.add(new Lexeme(LexemeType.RIGHT_BRACKET, character));
                     position++;
                 }
-                case '+' -> {
+                case PLUS_CHAR -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_PLUS, character));
                     position++;
                 }
-                case '-' -> {
+                case MINUS_CHAR -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_MINUS, character));
                     position++;
                 }
-                case '*' -> {
+                case MULTIPLY_CHAR -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_MUL, character));
                     position++;
                 }
-                case '/' -> {
+                case DIVIDE_CHAR -> {
                     lexemes.add(new Lexeme(LexemeType.OPERATOR_DIV, character));
                     position++;
                 }
                 default -> {
-                    if (isCertainCharacters(character, '0', '9')) { //number parse
+                    if (isCertainCharacters(character, ZERO_CHAR, NINE_CHAR)) { //number parse
                         StringBuilder sb = new StringBuilder();
                         do {
                             sb.append(character);
@@ -69,23 +74,23 @@ public class Analyzer {
                                 break;
                             }
                             character = expression.charAt(position);
-                        } while (isCertainCharacters(character, '0', '9'));
+                        } while (isCertainCharacters(character, ZERO_CHAR, NINE_CHAR));
                         lexemes.add(new Lexeme(LexemeType.NUMBER, sb.toString()));
-                    } else if (isCertainCharacters(character, 'a', 'z')) { //letter parse
+                    } else if (isCertainCharacters(character, A_CHAR, Z_CHAR)) { //letter parse
                         StringBuilder sb = new StringBuilder();
                         do {
-                            String valueFromParameter = req.getParameter(String.valueOf(character));
-                            sb.append(valueFromParameter);
+                            String valueFromParameterHTTP = req.getParameter(String.valueOf(character));
+                            sb.append(valueFromParameterHTTP);
                             position++;
                             if (position >= expression.length()) {
                                 break;
                             }
                             character = expression.charAt(position);
-                        } while (isCertainCharacters(character, 'a', 'z'));
+                        } while (isCertainCharacters(character, A_CHAR, Z_CHAR));
                         lexemes.add(new Lexeme(LexemeType.NUMBER, sb.toString()));
                     } else {
-                        if (character != ' ') {
-                            throw new RuntimeException("Unexpected character: " + character);
+                        if (character != SPACE_CHAR) {
+                            throw new RuntimeException(UNEXPECTED_CHARACTER + character);
                         }
                         position++;
                     }
@@ -93,7 +98,6 @@ public class Analyzer {
             }
         }
         lexemes.add(new Lexeme(LexemeType.EOF, "")); //end of field add to list
-        System.out.println(lexemes);
         return lexemes;
     }
 
@@ -135,14 +139,13 @@ public class Analyzer {
                     lexemes.back();
                     return value;
                 }
-                default -> throw new RuntimeException("Unexpected token: " + lexeme.value
-                        + " at position: " + lexemes.getPos());
+                default -> throw new RuntimeException(UNEXPECTED_TOKEN + lexeme.value + AT_POSITION + lexemes.getPos());
             }
         }
     }
 
     /**
-     * This is method for parsing subexpression (multiply, divide) with factor and get result.
+     * This is method for parse subexpression (multiply, divide) with factor and get result.
      *
      * @param lexemes LexemeBuffer
      * @return result value with multiply and divide
@@ -159,8 +162,7 @@ public class Analyzer {
                     lexemes.back();
                     return value;
                 }
-                default -> throw new RuntimeException("Unexpected token: " + lexeme.value
-                        + " at position: " + lexemes.getPos());
+                default -> throw new RuntimeException(UNEXPECTED_TOKEN + lexeme.value + AT_POSITION + lexemes.getPos());
             }
         }
     }
@@ -182,13 +184,11 @@ public class Analyzer {
                 int value = bracketsExpression(lexemes);
                 lexeme = lexemes.next();
                 if (lexeme.type != LexemeType.RIGHT_BRACKET) {
-                    throw new RuntimeException("Unexpected token: " + lexeme.value
-                            + " at position: " + lexemes.getPos());
+                    throw new RuntimeException(UNEXPECTED_TOKEN + lexeme.value + AT_POSITION + lexemes.getPos());
                 }
                 return value;
             }
-            default -> throw new RuntimeException("Unexpected token: " + lexeme.value
-                    + " at position: " + lexemes.getPos());
+            default -> throw new RuntimeException(UNEXPECTED_TOKEN + lexeme.value + AT_POSITION + lexemes.getPos());
         }
     }
 }
